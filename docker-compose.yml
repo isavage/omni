@@ -1,0 +1,96 @@
+# OmniRoute — Docker Compose (VPS)
+# Derived from https://github.com/diegosouzapw/OmniRoute/blob/release/v3.8.51/docs/guides/DOCKER_GUIDE.md
+# Uses pre-built image diegosouzapw/omniroute:latest (pinned tag recommended for GitOps).
+# Includes Redis sidecar for rate limiter / quota cache.
+#
+# Quick start:
+#   cp .env.example .env   # edit secrets
+#   docker compose up -d
+#   docker compose logs -f
+#
+# Profiles note: upstream OmniRoute ships profiles (base/cli/host/etc.).
+# This wrapper defaults to a single `omniroute` service using the prebuilt image.
+# If you need CLI tools inside the container, switch image to :latest or build locally.
+# See README.md for details.
+
+services:
+  # ── Redis (rate limiter / cache backend) ──────────────────────────
+  # Always-on. App reaches it via redis:6379 over compose network.
+  # Host port is loopback-only by default (unauthenticated Redis).
+  redis:
+    image: docker.io/library/redis:8.6.5-alpine
+    container_name: omniroute-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_BIND_HOST:-127.0.0.1}:${REDIS_PORT:-6379}:6379"
+    volumes:
+      - omniroute-redis-data:/data
+    command: redis-server --save 60 1 --loglevel warning
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ── OmniRoute App ─────────────────────────────────────────────────
+  omniroute:
+    image: diegosouzapw/omniroute:${OMNIROUTE_IMAGE_TAG:-latest}
+    container_name: omniroute
+    restart: unless-stopped
+    stop_grace_period: 40s
+    env_file:
+      - .env
+    environment:
+      # Runtime — override via .env
+      - DATA_DIR=/app/data
+      - PORT=${PORT:-20128}
+      - HOSTNAME=0.0.0.0
+      - OMNIROUTE_MEMORY_MB=${OMNIROUTE_MEMORY_MB:-1024}
+      - NODE_OPTIONS=--max-old-space-size=${OMNIROUTE_MEMORY_MB:-1024}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - OMNIROUTE_BASE_PATH=${OMNIROUTE_BASE_PATH:-}
+      - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL:-}
+      - OMNIROUTE_WS_BRIDGE_SECRET=${OMNIROUTE_WS_BRIDGE_SECRET:-}
+    ports:
+      # Bind loopback by default; set OMNIROUTE_BIND_HOST=0.0.0.0 to expose on LAN
+      # or front with Caddy/Traefik (see Caddy profile below).
+      - "${OMNIROUTE_BIND_HOST:-127.0.0.1}:${PORT:-20128}:20128"
+    volumes:
+      - omniroute-data:/app/data
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "healthcheck.mjs"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    # Uncomment to raise cgroup memory when raising OMNIROUTE_MEMORY_MB (see DOCKER_GUIDE.md → Runtime RAM)
+    # deploy:
+    #   resources:
+    #     limits:
+    #       memory: 10g
+
+  # ── Optional: Caddy reverse proxy with auto-TLS ───────────────────
+  # Enable with: docker compose --profile caddy up -d
+  # Requires NEXT_PUBLIC_BASE_URL=https://your-domain.com and DNS A → VPS IP.
+  # caddy:
+  #   image: caddy:latest
+  #   container_name: caddy
+  #   restart: unless-stopped
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   command: caddy reverse-proxy --from ${NEXT_PUBLIC_BASE_URL:-https://your-domain.com} --to http://omniroute:20128
+  #   depends_on:
+  #     omniroute:
+  #       condition: service_healthy
+  #   profiles:
+  #     - caddy
+
+volumes:
+  omniroute-data:
+    name: omniroute-data
+  omniroute-redis-data:
+    name: omniroute-redis-data
