@@ -6,17 +6,16 @@ on:
   workflow_dispatch:
     inputs:
       no_cache:
-        description: "Rebuild Docker images without cache (--no-cache)"
+        description: "Rebuild without cache"
         required: false
         type: boolean
         default: false
       cleanup:
-        description: "Prune unused Docker images after deploy"
+        description: "Prune unused images"
         required: false
         type: boolean
         default: false
 
-# Ensure only one deploy at a time; queue others
 concurrency:
   group: deploy-vps
   cancel-in-progress: false
@@ -24,37 +23,13 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    # If your VPS_* secrets are stored in a GitHub Environment (Settings → Environments),
-    # set the environment name here so they are available. Otherwise omit this line.
-    # environment: production
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Deploy to VPS via SSH (Docker Compose)
-        uses: isavage/deploy@v3
+      - uses: actions/checkout@v4
+      - uses: isavage/deploy@v3
         with:
           host: ${{ secrets.VPS_HOST }}
           user: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          # Optional: Doppler token — omit if not using Doppler
-          # doppler_token: ${{ secrets.DOPPLER_TOKEN }}
-          # Optional: pass .env contents from GitHub secret ENV_FILE (alternative to Doppler / server-side .env)
-          # env_content: ${{ secrets.ENV_FILE }}
-
-          # Compose file (auto-detects compose.yml if docker-compose.yml missing)
           compose_file: docker-compose.yml
-
-          # VPS target directory — defaults to /docker/<repo-name>
-          # target_dir: /docker/omni
-
-          # Rebuild / cache controls (wired to workflow_dispatch inputs)
           no_cache: ${{ inputs.no_cache || false }}
           cleanup: ${{ inputs.cleanup || false }}
-
-          # Health check — set to your app service name to poll `docker inspect`
-          # service_name: omniroute
-
-          # Optional hooks (uncomment as needed):
-          # pre_deploy_command: "echo 'pre-deploy hook'"
-          # post_deploy_command: "docker compose ps && docker compose logs --tail=50"
