@@ -23,6 +23,7 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: prod-IN
     steps:
       - uses: actions/checkout@v4
       - uses: isavage/deploy@v3
