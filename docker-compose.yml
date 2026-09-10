@@ -37,7 +37,8 @@ services:
       - OMNIROUTE_BASE_PATH=${OMNIROUTE_BASE_PATH:-}
       - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL:-}
       - OMNIROUTE_WS_BRIDGE_SECRET=${OMNIROUTE_WS_BRIDGE_SECRET:-}
-      - AUTH_COOKIE_SECURE=${AUTH_COOKIE_SECURE:-false}
+      # Optional security settings set true for nginx reverse proxy with HTTPS
+      - AUTH_COOKIE_SECURE=${AUTH_COOKIE_SECURE:-true} 
     expose:
       - "${PORT:-20128}/tcp"
     volumes:
