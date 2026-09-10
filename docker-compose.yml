@@ -61,5 +61,5 @@ volumes:
 
 networks:
   omni.net:
-    name:   omni.net
+    name: omni.net
     driver: bridge
