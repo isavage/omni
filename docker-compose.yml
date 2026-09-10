@@ -21,11 +21,10 @@ services:
     container_name: omniroute
     restart: unless-stopped
     stop_grace_period: 40s
-    env_file:
-      - .env
     environment:
       - JWT_SECRET=${JWT_SECRET}
       - API_KEY_SECRET=${API_KEY_SECRET}
+      - INITIAL_PASSWORD=${INITIAL_PASSWORD:-CHANGEME}
       - STORAGE_ENCRYPTION_KEY=${STORAGE_ENCRYPTION_KEY:-}
       - STORAGE_ENCRYPTION_KEY_VERSION=${STORAGE_ENCRYPTION_KEY_VERSION:-v1}
       - DATA_DIR=/app/data
@@ -36,9 +35,11 @@ services:
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
       - OMNIROUTE_BASE_PATH=${OMNIROUTE_BASE_PATH:-}
       - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL:-}
+      - NEXT_PUBLIC_CLOUD_URL=${NEXT_PUBLIC_CLOUD_URL:-}
+      - BASE_URL=${BASE_URL:-http://localhost:20128}
       - OMNIROUTE_WS_BRIDGE_SECRET=${OMNIROUTE_WS_BRIDGE_SECRET:-}
-      # Optional security settings set true for nginx reverse proxy with HTTPS
-      - AUTH_COOKIE_SECURE=${AUTH_COOKIE_SECURE:-true} 
+      - AUTH_COOKIE_SECURE=${AUTH_COOKIE_SECURE:-false}
+      - NODE_ENV=${NODE_ENV:-production}
     expose:
       - "${PORT:-20128}/tcp"
     volumes:

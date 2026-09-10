@@ -32,5 +32,6 @@ jobs:
           user: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           compose_file: docker-compose.yml
+          doppler_token: ${{ secrets.DOPPLER_TOKEN }}
           no_cache: ${{ inputs.no_cache || false }}
           cleanup: ${{ inputs.cleanup || false }}
