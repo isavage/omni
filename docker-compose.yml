@@ -17,7 +17,7 @@ services:
       - omni.net
 
   omniroute:
-    image: diegosouzapw/omniroute:${OMNIROUTE_IMAGE_TAG:-latest}
+    image: diegosouzapw/omniroute:${OMNIROUTE_IMAGE_TAG:-next}
     container_name: omniroute
     restart: unless-stopped
     stop_grace_period: 40s
