@@ -1,7 +1,7 @@
 services:
-  redis:
+  omniroute.redis:
     image: docker.io/library/redis:8.6.5-alpine
-    container_name: omniroute-redis
+    container_name: omniroute.redis
     restart: unless-stopped
     expose:
       - "${REDIS_PORT:-6379}/tcp"
@@ -32,7 +32,7 @@ services:
       - HOSTNAME=0.0.0.0
       - OMNIROUTE_MEMORY_MB=${OMNIROUTE_MEMORY_MB:-1024}
       - NODE_OPTIONS=--max-old-space-size=${OMNIROUTE_MEMORY_MB:-1024}
-      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - REDIS_URL=${REDIS_URL:-redis://omniroute.redis:6379}
       - OMNIROUTE_BASE_PATH=${OMNIROUTE_BASE_PATH:-}
       - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL:-}
       - NEXT_PUBLIC_CLOUD_URL=${NEXT_PUBLIC_CLOUD_URL:-}
@@ -45,7 +45,7 @@ services:
     volumes:
       - omniroute-data:/app/data
     depends_on:
-      redis:
+      omniroute.redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "node", "healthcheck.mjs"]
