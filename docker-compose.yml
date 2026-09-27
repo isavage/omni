@@ -41,6 +41,8 @@ services:
       - AUTH_COOKIE_SECURE=${AUTH_COOKIE_SECURE:-false}
       - NODE_ENV=${NODE_ENV:-production}
       - REQUIRE_API_KEY=${REQUIRE_API_KEY:-true}
+      # Optional: Fix to Enable free tier tools for OpenCode
+      - OPENCODE_FREE_TIER_PLACEHOLDER_TOOLS=bash,read,glob,grep,edit,write,webfetch,task
     expose:
       - "${PORT:-20128}/tcp"
     volumes:
